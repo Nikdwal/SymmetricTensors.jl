@@ -6,7 +6,7 @@ module SymmetricTensors
   using LinearAlgebra
   import Base: +, -, *, /, size, getindex, rand, setindex!
 
-  const ArrayNArrays{T,N} = Array{Union{Array{T, N}, Nothing}, N} where {T<:AbstractFloat, N}
+  const ArrayNArrays{T,N} = Array{Union{Array{T, N}, Nothing}, N} where {T<:Number, N}
   function arraynarrays(T::Type, dims...)
       N = length(dims)
       symten = ArrayNArrays{T,N}(undef, dims...)

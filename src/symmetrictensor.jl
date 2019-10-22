@@ -6,7 +6,7 @@ bln - Int, number of blocks
 datasize - Int, size of data stored (in each direction the same)
 sqr - Bool, is the last block size a same as ordinary's block size
 """
-mutable struct SymmetricTensor{T <: AbstractFloat, N}
+mutable struct SymmetricTensor{T <: Number, N}
     frame::ArrayNArrays{T,N}
     bls::Int
     bln::Int
@@ -49,7 +49,7 @@ julia> unfold(A, 1)
    5.0  6.0  7.0  8.0
 ```
 """
-function unfold(ar::Array{T,N}, mode::Int) where {T <: Real, N}
+function unfold(ar::Array{T,N}, mode::Int) where {T <: Number, N}
     C = [1:mode-1; mode+1:N]
     i = size(ar)
     k = prod(i[C])
@@ -69,7 +69,7 @@ julia> julia> issymetric(A)
 ERROR: AssertionError: not symmetric
 ```
 """
-function issymetric(ar::Array{T, N}, atol::Float64 = 1e-7) where {T <: AbstractFloat, N}
+function issymetric(ar::Array{T, N}, atol::Float64 = 1e-7) where {T <: Number, N}
   for i=2:N
      maximum(abs.(unfold(ar, 1)-unfold(ar, i))) < atol ||throw(AssertionError("not symmetric"))
   end
@@ -82,7 +82,7 @@ Returns assertion error if: all sizes of nullable array not equal, at least
   some undergiagonal block not null, some blocks (not last) not squared,
   some diagonal blocks not symmetric.
 """
-function frtest(data::ArrayNArrays{T,N}) where {T <: AbstractFloat, N}
+function frtest(data::ArrayNArrays{T,N}) where {T <: Number, N}
   bln = size(data, 1)
   bls = size(data[fill(1, N)...,], 1)
   all(collect(size(data)) .== bln) || throw(AssertionError("frame not has non-equal dimensions"))
@@ -176,7 +176,7 @@ end
 
 Unsafe change a SymmetricTensors value at the given multi-index
 """
-function setindexunsafe!(st::SymmetricTensor{T,N}, x::T,  mulind::Int...) where {T <: AbstractFloat, N}
+function setindexunsafe!(st::SymmetricTensor{T,N}, x::T,  mulind::Int...) where {T <: Number, N}
     b = st.bls
     j = map(k -> div((k-1), b)+1, mulind)
     i = map(k -> ((k-1)%b)+1, mulind)
@@ -194,7 +194,7 @@ end
 
 Change a SymmetricTensors value at the given multi-index
 """
-function setindex!(st::SymmetricTensor{T,N}, x::T,  mulind::Int...) where {T <: AbstractFloat, N}
+function setindex!(st::SymmetricTensor{T,N}, x::T,  mulind::Int...) where {T <: Number, N}
     setindexunsafe!(st, x, sort([mulind...])...)
 end
 """
@@ -221,7 +221,7 @@ julia> SymmetricTensor(a*a')
 SymmetricTensors.SymmetricTensor{Float64,2}(Union{Array{Float64,2}, Void}[[276.0 304.0; 304.0 336.0][332.0 360.0; 368.0 400.0]; nothing [404.0 440.0; 440.0 480.0]], 2, 2, 4, true)
 ```
 """
-function SymmetricTensor(data::Array{T, N}, bls::Int = 2) where {T <: AbstractFloat, N}
+function SymmetricTensor(data::Array{T, N}, bls::Int = 2) where {T <: Number, N}
   issymetric(data)
   dats = size(data,1)
   sizetest(dats, bls)
@@ -240,7 +240,7 @@ end
 Return N dims array converted from SymmetricTensor type
 
 """
-function Array(st::SymmetricTensor{T,N}) where {T<:AbstractFloat, N}
+function Array(st::SymmetricTensor{T,N}) where {T<:Number, N}
   array = zeros(T, fill(st.dats, N)...,)
   for i = 1:(st.bln^N)
     dims = (fill(st.bln, N)...,)
@@ -258,14 +258,14 @@ end
 Return vector of floats, the super-diag of st
 
 """
-diag(st::SymmetricTensor{T,N}) where {T<: AbstractFloat, N} = map(i->st[fill(i, N)...,], 1:st.dats)
+diag(st::SymmetricTensor{T,N}) where {T<: Number, N} = map(i->st[fill(i, N)...,], 1:st.dats)
 
 
 # implements simple operations on bs structure
 
 
 for f = (:+, :-)
-  @eval function ($f)(st::SymmetricTensor{T,N}...) where {T <: AbstractFloat, N}
+  @eval function ($f)(st::SymmetricTensor{T,N}...) where {T <: Number, N}
     for s in st[2:end]
       s.dats == st[1].dats || throw(DimensionMismatch("dimensions must match"))
     end
@@ -279,7 +279,7 @@ for f = (:+, :-)
 end
 
 for f = (:+, :-, :*, :/)
-  @eval function ($f)(st::SymmetricTensor{T, N}, numb::S) where {T <: AbstractFloat, S <: Real, N}
+  @eval function ($f)(st::SymmetricTensor{T, N}, numb::S) where {T <: Number, S <: Number, N}
       stret = similar(st.frame)
       for i in pyramidindices(N, st.bln)
         @inbounds stret[i...] = broadcast($f, getblockunsafe(st, i), numb)
@@ -290,6 +290,6 @@ end
 
 
 for f = (:+, :*)
-  @eval ($f)(numb::S, st::SymmetricTensor{T}) where {T <: AbstractFloat, S <: Real} =
+  @eval ($f)(numb::S, st::SymmetricTensor{T}) where {T <: Number, S <: Number} =
   ($f)(st::SymmetricTensor{T}, numb::S)
 end

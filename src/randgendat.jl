@@ -7,7 +7,7 @@ Returns N-dimmensional random super-symmetric array with elements of type T draw
 dim denotes data size.
 
 """
-function randsymarray(::Type{T}, dim::Int, N::Int = 4) where T<:Real
+function randsymarray(::Type{T}, dim::Int, N::Int = 4) where T<:Number
   t = zeros(fill(dim, N)...,)
   for i in pyramidindices(N,dim)
     n = rand(T)
@@ -53,7 +53,7 @@ Returns a block of size dims and position j by a uniformly distributed random nu
 of type T
 
 """
-function randblock(::Type{T}, dims::NTuple{N, Int}, j::NTuple{N, Int}) where {T<:Real, N}
+function randblock(::Type{T}, dims::NTuple{N, Int}, j::NTuple{N, Int}) where {T<:Number, N}
   t = zeros(dims)
   ofset = vcat([0], cumsum(counts([j...])))
   fp = fixpointperms(j)
@@ -77,7 +77,7 @@ Returns N-dimensional random SymmetricTensor with elements of type T drawn from 
 n denotes data size and b denotes block size.
 
 """
-function rand(::Type{SymmetricTensor{T, N}}, n::Int, b::Int = 2) where {T<:AbstractFloat, N}
+function rand(::Type{SymmetricTensor{T, N}}, n::Int, b::Int = 2) where {T<:Number, N}
   sizetest(n, b)
   nbar = mod(n,b)==0 ? n÷b : n÷b + 1
   ret = arraynarrays(Float64, fill(nbar, N)...,)
