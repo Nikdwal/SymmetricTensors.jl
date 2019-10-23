@@ -93,7 +93,7 @@ function frtest(data::ArrayNArrays{T,N}) where {T <: Number, N}
       end
   end
 
-  for i in pyramidindices(N, bln-1)
+  for i in pyramidindices(Val(N), bln-1)
     @inbounds all(collect(size(data[i...])) .== bls)||
         throw(AssertionError("$i block not square"))
   end
@@ -116,8 +116,8 @@ julia> pyramidindices(2,3)
  (3,3)
 ```
 """
-function pyramidindices(dims::Int, tensize::Int)
-    multinds = Tuple{fill(Int,dims)...,}[]
+function pyramidindices(::Val{dims}, tensize::Int) where dims
+    multinds = Tuple{fill(Int,Val(dims))...,}[]
     @eval begin
         @nloops $dims i x -> (x==$dims) ? (1:$tensize) : (i_{x+1}:$tensize) begin
             @inbounds multind = @ntuple $dims x -> i_{$dims-x+1}
@@ -226,8 +226,8 @@ function SymmetricTensor(data::Array{T, N}, bls::Int = 2) where {T <: Number, N}
   dats = size(data,1)
   sizetest(dats, bls)
   bln = mod(dats,bls)==0 ?  dats÷bls : dats÷bls + 1
-  symten = arraynarrays(T, fill(bln, N)...,)
-  for writeind in pyramidindices(N, bln)
+  symten ::ArrayNArrays{T, N} = arraynarrays(T, fill(bln, N)...,)
+  for writeind in pyramidindices(Val(N), bln)
       readind = map(k::Int -> ind2range(k, bls, dats), writeind)
       @inbounds symten[writeind...] = data[readind...]
   end
@@ -271,7 +271,7 @@ for f = (:+, :-)
     end
     narg = size(st, 1)
     stret = similar(st[1].frame)
-    for i in pyramidindices(N, st[1].bln)
+    for i in pyramidindices(Val(N), st[1].bln)
       @inbounds stret[i...] = broadcast($f, map(t -> getblockunsafe(t, i), st)...)
     end
     SymmetricTensor(stret; testdatstruct = false)
@@ -281,7 +281,7 @@ end
 for f = (:+, :-, :*, :/)
   @eval function ($f)(st::SymmetricTensor{T, N}, numb::S) where {T <: Number, S <: Number, N}
       stret = similar(st.frame)
-      for i in pyramidindices(N, st.bln)
+      for i in pyramidindices(Val(N), st.bln)
         @inbounds stret[i...] = broadcast($f, getblockunsafe(st, i), numb)
       end
       SymmetricTensor(stret; testdatstruct = false)
