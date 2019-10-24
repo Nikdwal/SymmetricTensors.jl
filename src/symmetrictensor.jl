@@ -103,7 +103,7 @@ function frtest(data::ArrayNArrays{T,N}) where {T <: Number, N}
 end
 
 """
-  pyramidindices(dims::Int, tensize::Int)
+pyramidindices(::Val{dims}, tensize::Int) where dims
 
 ```jldoctest
 julia> pyramidindices(2,3)
@@ -116,15 +116,27 @@ julia> pyramidindices(2,3)
  (3,3)
 ```
 """
-function pyramidindices(::Val{dims}, tensize::Int) where dims
-    multinds = NTuple{dims, Int}[]
-    @eval begin
-        @nloops $dims i x -> (x==$dims) ? (1:$tensize) : (i_{x+1}:$tensize) begin
-            @inbounds multind = @ntuple $dims x -> i_{$dims-x+1}
-            push!($multinds, multind)
-        end
-    end
-    multinds
+function pyramidindices(::Val{k}, tensize::Int) where k
+
+	numidx     = binomial(tensize+k-1, k)
+	idxs       = Matrix{Int}(undef, (k, numidx)) # each column is a multi-index
+	idxs[:,1] .= 1
+
+	for j = 1:size(idxs, 2)-1
+		prev = @views idxs[:,j]
+		next = @views idxs[:,j+1]
+
+		i = 1
+		while i+1 <= k && prev[i] == prev[i+1]
+			i += 1
+		end # i is the earliest place that is not equal to its neighbour
+
+		next[1:i-1]   .= 1
+		next[i]        = prev[i] + 1
+		next[i+1:end] .= prev[i+1:end]
+	end
+
+	[NTuple{k, Int}(@views idxs[:,j]) for j in axes(idxs,2)]
 end
 
 """
