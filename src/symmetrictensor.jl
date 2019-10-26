@@ -139,6 +139,9 @@ function pyramidindices(::Val{k}, tensize::Int) where k
 	[NTuple{k, Int}(@views idxs[:,j]) for j in axes(idxs,2)]
 end
 
+"""type-unstable version of pyramidindices, used for backwards compatibility"""
+pyramidindices(k :: Int, tensize) = pyramidindices(Val(k), tensize)
+
 """
 
     sizetest(dats::Int, bls::Int)
