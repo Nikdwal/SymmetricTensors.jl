@@ -118,6 +118,8 @@ julia> pyramidindices(2,3)
 """
 function pyramidindices(::Val{k}, tensize::Int) where k
 
+    tensize == 0 && return NTuple{k, Int}[]
+
 	numidx     = binomial(tensize+k-1, k)
 	idxs       = Matrix{Int}(undef, (k, numidx)) # each column is a multi-index
 	idxs[:,1] .= 1
